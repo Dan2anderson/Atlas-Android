@@ -11,6 +11,7 @@ import com.layer.atlas.AtlasAvatar;
 import com.layer.atlas.R;
 import com.layer.atlas.util.ConversationStyle;
 import com.layer.atlas.util.IdentityRecyclerViewEventListener;
+import com.layer.atlas.util.Log;
 import com.layer.atlas.util.Util;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.messaging.Conversation;
@@ -63,6 +64,11 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
             @Override
             public void onClick(ViewHolder viewHolder) {
                 if (mConversationClickListener == null) return;
+
+                if (Log.isPerfLoggable()) {
+                    Log.perf("Conversation ViewHolder onClick");
+                }
+
                 mConversationClickListener.onConversationClick(AtlasConversationsAdapter.this, viewHolder.getConversation());
             }
 
@@ -221,43 +227,75 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
     public void onQueryDataSetChanged(RecyclerViewController controller) {
         syncInitialMessages(0, getItemCount());
         notifyDataSetChanged();
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryDataSetChanged");
+        }
     }
 
     @Override
     public void onQueryItemChanged(RecyclerViewController controller, int position) {
         notifyItemChanged(position);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemChanged. Position: " + position);
+        }
     }
 
     @Override
     public void onQueryItemRangeChanged(RecyclerViewController controller, int positionStart, int itemCount) {
         notifyItemRangeChanged(positionStart, itemCount);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemRangeChanged. Position start: " + positionStart + " Count: " + itemCount);
+        }
     }
 
     @Override
     public void onQueryItemInserted(RecyclerViewController controller, int position) {
         syncInitialMessages(position, 1);
         notifyItemInserted(position);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemInserted. Position: " + position);
+        }
     }
 
     @Override
     public void onQueryItemRangeInserted(RecyclerViewController controller, int positionStart, int itemCount) {
         syncInitialMessages(positionStart, itemCount);
         notifyItemRangeInserted(positionStart, itemCount);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemRangeInserted. Position start: " + positionStart + " Count: " + itemCount);
+        }
     }
 
     @Override
     public void onQueryItemRemoved(RecyclerViewController controller, int position) {
         notifyItemRemoved(position);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemRemoved. Position: " + position);
+        }
     }
 
     @Override
     public void onQueryItemRangeRemoved(RecyclerViewController controller, int positionStart, int itemCount) {
         notifyItemRangeRemoved(positionStart, itemCount);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemRangeRemoved. Position start: " + positionStart + " Count: " + itemCount);
+        }
     }
 
     @Override
     public void onQueryItemMoved(RecyclerViewController controller, int fromPosition, int toPosition) {
         notifyItemMoved(fromPosition, toPosition);
+
+        if (Log.isPerfLoggable()) {
+            Log.perf("Conversations adapter - onQueryItemMoved. From: " + fromPosition + " To: " + toPosition);
+        }
     }
 
 

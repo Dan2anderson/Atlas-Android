@@ -159,6 +159,10 @@ public class LocationSender extends AttachmentSender {
         @Override
         public void onLocationChanged(Location location) {
             if (Log.isLoggable(Log.VERBOSE)) Log.v("Got fresh location");
+
+            if (Log.isPerfLoggable()) {
+                Log.perf("LocationSender is attempting to send a message");
+            }
             LocationSender sender = mLocationSenderReference.get();
             if (sender == null) return;
             Context context = sender.getContext();

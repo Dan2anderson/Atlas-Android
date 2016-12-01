@@ -6,6 +6,7 @@ package com.layer.atlas.util;
  */
 public class Log {
     public static final String TAG = "LayerAtlas";
+    private static final String PERF_TAG = "LayerPerf:Atlas";
 
     // Makes IDE auto-completion easy
     public static final int VERBOSE = android.util.Log.VERBOSE;
@@ -74,5 +75,13 @@ public class Log {
 
     public static void e(String message, Throwable error) {
         android.util.Log.e(TAG, message, error);
+    }
+
+    public static boolean isPerfLoggable() {
+        return sAlwaysLoggable || android.util.Log.isLoggable(PERF_TAG, DEBUG);
+    }
+
+    public static void perf(String message) {
+        android.util.Log.d(PERF_TAG, message);
     }
 }

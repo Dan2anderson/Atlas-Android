@@ -73,6 +73,9 @@ public class CameraSender extends AttachmentSender {
         }
         if (Log.isLoggable(Log.VERBOSE)) Log.v("Received camera response");
         try {
+            if (Log.isPerfLoggable()) {
+                Log.perf("CameraSender is attempting to send a message");
+            }
             Identity me = getLayerClient().getAuthenticatedUser();
             String myName = me == null ? "" : Util.getDisplayName(me);
             Message message = ThreePartImageUtils.newThreePartImageMessage(activity, getLayerClient(), new File(mPhotoFilePath.get()));

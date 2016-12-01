@@ -28,6 +28,10 @@ public class TextSender extends MessageSender {
         }
         if (Log.isLoggable(Log.VERBOSE)) Log.v("Sending text message");
 
+        if (Log.isPerfLoggable()) {
+            Log.perf("TextSender is attempting to send a message");
+        }
+
         // Create notification string
         Identity me = getLayerClient().getAuthenticatedUser();
         String myName = me == null ? "" : Util.getDisplayName(me);
