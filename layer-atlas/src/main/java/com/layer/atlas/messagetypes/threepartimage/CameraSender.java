@@ -3,9 +3,11 @@ package com.layer.atlas.messagetypes.threepartimage;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 
 import com.layer.atlas.R;
 import com.layer.atlas.messagetypes.AttachmentSender;
@@ -31,6 +33,16 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class CameraSender extends AttachmentSender {
     public static final int ACTIVITY_REQUEST_CODE = 20;
+    private static String fileProviderDestination;
+
+    /**
+     * If the developers app already has a FileProvider you will need to call this method at initialization to set the layer fileProviderDestination to match the apps destination for its own fileProvider.
+     * So for example if your apps FileProvider's authority is like this in the manifest  android:authorities="com.salesrabbit.android.sales.universal.fileprovider"  you will need to pass in the string ".fileprovider"
+     * @param str
+     */
+    public static void setFileProviderDestination(String str){
+        fileProviderDestination = str;
+    }
 
     private WeakReference<Activity> mActivity = new WeakReference<Activity>(null);
 
@@ -50,7 +62,15 @@ public class CameraSender extends AttachmentSender {
         File file = new File(getContext().getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES), fileName);
         mPhotoFilePath.set(file.getAbsolutePath());
         Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-        final Uri outputUri = Uri.fromFile(file);
+        final Uri outputUri;
+        if (fileProviderDestination == null) {
+            fileProviderDestination = ".provider";  //If the developer has not set their owne fileProvider destination then set it to use the default fileProvider for layer.
+        }
+        if (Build.VERSION.SDK_INT >=  Build.VERSION_CODES.N) {
+            outputUri = FileProvider.getUriForFile(getContext(), getContext().getApplicationContext().getPackageName() + fileProviderDestination, file);
+        } else {
+            outputUri = Uri.fromFile(file);
+        }
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputUri);
         activity.startActivityForResult(cameraIntent, ACTIVITY_REQUEST_CODE);
     }
