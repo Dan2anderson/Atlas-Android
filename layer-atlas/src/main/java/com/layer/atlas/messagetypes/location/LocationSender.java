@@ -136,7 +136,7 @@ public class LocationSender extends AttachmentSender {
         if (activity == null) return false;
         if (Log.isLoggable(Log.VERBOSE)) Log.v("Sending location");
         if (checkSelfPermission(activity, PERMISSION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(activity, new String[]{PERMISSION}, PERMISSION_REQUEST_CODE);
+            requestPermissions(activity, PERMISSION_REQUEST_CODE, PERMISSION);
             return true;
         }
         return getFreshLocation(new SenderLocationListener(this));

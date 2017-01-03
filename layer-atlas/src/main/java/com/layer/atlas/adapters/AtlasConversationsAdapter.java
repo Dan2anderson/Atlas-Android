@@ -9,6 +9,12 @@ import android.widget.TextView;
 
 import com.layer.atlas.AtlasAvatar;
 import com.layer.atlas.R;
+import com.layer.atlas.messagetypes.AtlasCellFactory;
+import com.layer.atlas.messagetypes.generic.GenericCellFactory;
+import com.layer.atlas.messagetypes.location.LocationCellFactory;
+import com.layer.atlas.messagetypes.singlepartimage.SinglePartImageCellFactory;
+import com.layer.atlas.messagetypes.text.TextCellFactory;
+import com.layer.atlas.messagetypes.threepartimage.ThreePartImageCellFactory;
 import com.layer.atlas.util.ConversationStyle;
 import com.layer.atlas.util.IdentityRecyclerViewEventListener;
 import com.layer.atlas.util.Util;
@@ -23,8 +29,12 @@ import com.layer.sdk.query.SortDescriptor;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConversationsAdapter.ViewHolder> implements AtlasBaseAdapter<Conversation>, RecyclerViewController.Callback {
     protected final LayerClient mLayerClient;
@@ -40,6 +50,9 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
     private final DateFormat mTimeFormat;
     private ConversationStyle conversationStyle;
     private final IdentityRecyclerViewEventListener mIdentityEventListener;
+
+    protected Set<AtlasCellFactory> mCellFactories;
+    private Set<AtlasCellFactory> mDefaultCellFactories;
 
     public AtlasConversationsAdapter(Context context, LayerClient client, Picasso picasso) {
         this(context, client, picasso, null);
@@ -78,6 +91,14 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
         mLayerClient.registerEventListener(mIdentityEventListener);
     }
 
+    public AtlasConversationsAdapter addCellFactories(AtlasCellFactory... cellFactories) {
+        if (mCellFactories == null) {
+            mCellFactories = new LinkedHashSet<AtlasCellFactory>();
+        }
+        Collections.addAll(mCellFactories, cellFactories);
+        return this;
+    }
+
     /**
      * Refreshes this adapter by re-running the underlying Query.
      */
@@ -91,7 +112,6 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
     public void onDestroy() {
         mLayerClient.unregisterEventListener(mIdentityEventListener);
     }
-
 
     //==============================================================================================
     // Initial message history
@@ -178,7 +198,7 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
             viewHolder.mMessageView.setText(null);
             viewHolder.mTimeView.setText(null);
         } else {
-            viewHolder.mMessageView.setText(Util.getLastMessageString(context, lastMessage));
+            viewHolder.mMessageView.setText(this.getLastMessageString(context, lastMessage));
             if (lastMessage.getReceivedAt() == null) {
                 viewHolder.mTimeView.setText(null);
             } else {
@@ -212,6 +232,35 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
         return ((ViewHolder) viewHolder).getConversation();
     }
 
+    //==============================================================================================
+    // Util methods
+    //==============================================================================================
+
+    private String getLastMessageString(Context context, Message message) {
+        Set<AtlasCellFactory> cellFactories = (mCellFactories == null || mCellFactories.isEmpty()) ? getDefaultCellFactories() : mCellFactories;
+
+        for (AtlasCellFactory cellFactory : cellFactories) {
+            if (cellFactory.isType(message)) {
+                return cellFactory.getPreviewText(context, message);
+            }
+        }
+
+        return GenericCellFactory.getPreview(context, message);
+    }
+
+    private Set<AtlasCellFactory> getDefaultCellFactories() {
+        if (mDefaultCellFactories == null) {
+            mDefaultCellFactories = new LinkedHashSet<>();
+        }
+        if (mDefaultCellFactories.isEmpty()) {
+            mDefaultCellFactories.addAll(Arrays.asList(new TextCellFactory(),
+                    new ThreePartImageCellFactory(mLayerClient, mPicasso),
+                    new LocationCellFactory(mPicasso),
+                    new SinglePartImageCellFactory(mLayerClient, mPicasso)));
+        }
+
+        return mDefaultCellFactories;
+    }
 
     //==============================================================================================
     // UI update callbacks

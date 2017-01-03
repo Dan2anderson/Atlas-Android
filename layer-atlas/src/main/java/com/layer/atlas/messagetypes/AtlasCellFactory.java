@@ -1,5 +1,6 @@
 package com.layer.atlas.messagetypes;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.LruCache;
 import android.view.LayoutInflater;
@@ -15,7 +16,8 @@ import com.layer.sdk.messaging.Message;
  * display.
  */
 public abstract class AtlasCellFactory<Tholder extends AtlasCellFactory.CellHolder, Tcache extends AtlasCellFactory.ParsedContent> {
-    private final LruCache<String, Tcache> mCache;
+    private LruCache<String, Tcache> mCache;
+    private final int mCacheBytes;
     protected MessageStyle mMessageStyle;
 
     /**
@@ -24,12 +26,7 @@ public abstract class AtlasCellFactory<Tholder extends AtlasCellFactory.CellHold
      * @param cacheBytes Maximum bytes of parsed content to maintain in an LRU cache.
      */
     public AtlasCellFactory(int cacheBytes) {
-        mCache = new LruCache<String, Tcache>(cacheBytes) {
-            @Override
-            protected int sizeOf(String key, Tcache value) {
-                return value.sizeOf();
-            }
-        };
+        this.mCacheBytes = cacheBytes;
     }
 
     /**
@@ -60,8 +57,8 @@ public abstract class AtlasCellFactory<Tholder extends AtlasCellFactory.CellHold
      * A best effort is made to pre-parse on a background thread before binding, but this method
      * may still get called on the main thread just prior to binding under heavy load.
      *
-     * @param layerClient         Active LayerClient
-     * @param message             Message to parse
+     * @param layerClient Active LayerClient
+     * @param message     Message to parse
      * @return Cacheable parsed object generated from the given Message
      */
     public abstract Tcache parseContent(LayerClient layerClient, Message message);
@@ -102,6 +99,15 @@ public abstract class AtlasCellFactory<Tholder extends AtlasCellFactory.CellHold
      * @return Parsed content object for the given Message.
      */
     public Tcache getParsedContent(LayerClient layerClient, Message message) {
+        if (mCache == null) {
+            mCache = new LruCache<String, Tcache>(mCacheBytes) {
+                @Override
+                protected int sizeOf(String key, Tcache value) {
+                    return value.sizeOf();
+                }
+            };
+        }
+
         String id = message.getId().toString();
         Tcache value = mCache.get(id);
         if (value != null) return value;
@@ -109,6 +115,10 @@ public abstract class AtlasCellFactory<Tholder extends AtlasCellFactory.CellHold
         if (value != null) mCache.put(id, value);
         return value;
     }
+
+    public abstract boolean isType(Message message);
+
+    public abstract String getPreviewText(Context context, Message message);
 
     /**
      * CellHolders maintain a reference to their Message, and allow the capture of user interactions

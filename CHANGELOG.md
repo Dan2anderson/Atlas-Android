@@ -1,5 +1,33 @@
 # Atlas Android
 
+## 0.3.6
+
+### Features
+  * Added convenience methods for checking and requesting permissions in `AttachmentSender`
+  * Fix crash while using the Camera to take a photo on API Level 24 (Android 7.0 - Nougat)
+  * Fix crash while using the Gallery to upload a photo on API Level 24 (Android 7.0 - Nougat)
+
+## 0.3.5
+
+### Major Changes
+  * Update to Layer Android SDK Version 0.23.4
+
+## 0.3.4
+
+### Features
+  * No longer need to fork the project to create custom cell factories. Subclass `AtlasCellFactory` and register an instance with `AtlasConversationsAdapter` and `AtlasMessagesAdapter`.
+  * `ThreePartImageCellFactory`, `LocationCellFactory` and `SinglePartImageCellFactory` no longer require an `Activity` or `Context` to be supplied to the constructor. Those constructors are now deprecated. 
+
+## 0.3.3
+
+### Major Changes
+  * Update to Layer Android SDK Version 0.23.2
+
+## 0.3.2
+
+### Major Changes
+  * Update to Layer Android SDK Version 0.23.1
+
 ## 0.3.1
 
 ### Features

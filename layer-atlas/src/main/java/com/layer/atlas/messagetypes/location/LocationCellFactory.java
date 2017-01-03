@@ -35,28 +35,41 @@ public class LocationCellFactory extends AtlasCellFactory<LocationCellFactory.Ce
 
     private static final int PLACEHOLDER = R.drawable.atlas_message_item_cell_placeholder;
     private static final double GOLDEN_RATIO = (1.0 + Math.sqrt(5.0)) / 2.0;
+    private static final int CACHE_SIZE_BYTES = 256 * 1024;
 
     private final Picasso mPicasso;
-    private final Transformation mTransform;
+    private Transformation mTransform;
 
+    public LocationCellFactory(Picasso mPicasso) {
+        super(CACHE_SIZE_BYTES);
+        this.mPicasso = mPicasso;
+    }
+
+    /**
+     * @deprecated Use {@link #LocationCellFactory(Picasso)} instead
+     */
+    @Deprecated
     public LocationCellFactory(Context context, Picasso picasso) {
-        super(256 * 1024);
-        mPicasso = picasso;
-        float radius = context.getResources().getDimension(R.dimen.atlas_message_item_cell_radius);
-        mTransform = new RoundedTransform(radius);
+        this(picasso);
     }
 
-    public static boolean isType(Message message) {
-        return message.getMessageParts().get(0).getMimeType().equals(MIME_TYPE);
+    public boolean isType(Message message) {
+        return message.getMessageParts().size() == 1 && message.getMessageParts().get(0).getMimeType().equals(MIME_TYPE);
     }
 
-    public static String getMessagePreview(Context context, Message message) {
-        return context.getString(R.string.atlas_message_preview_location);
+    @Override
+    public String getPreviewText(Context context, Message message) {
+        if (isType(message)) {
+            return context.getString(R.string.atlas_message_preview_location);
+        }
+        else {
+            throw new IllegalArgumentException("Message is not of the correct type - Location");
+        }
     }
 
     @Override
     public boolean isBindable(Message message) {
-        return LocationCellFactory.isType(message);
+        return isType(message);
     }
 
     @Override
@@ -96,7 +109,7 @@ public class LocationCellFactory extends AtlasCellFactory<LocationCellFactory.Ce
         cellHolder.mProgressBar.show();
         mPicasso.load("https://maps.googleapis.com/maps/api/staticmap?zoom=16&maptype=roadmap&scale=2&center=" + location.mLatitude + "," + location.mLongitude + "&markers=color:red%7C" + location.mLatitude + "," + location.mLongitude + "&size=" + mapWidth + "x" + mapHeight)
                 .tag(PICASSO_TAG).placeholder(PLACEHOLDER).resize(cellDims[0], cellDims[1])
-                .transform(mTransform).into(cellHolder.mImageView, new Callback() {
+                .transform(getTransform(cellHolder.mImageView.getContext())).into(cellHolder.mImageView, new Callback() {
             @Override
             public void onSuccess() {
                 cellHolder.mProgressBar.hide();
@@ -128,6 +141,19 @@ public class LocationCellFactory extends AtlasCellFactory<LocationCellFactory.Ce
                 mPicasso.resumeTag(PICASSO_TAG);
                 break;
         }
+    }
+
+    //==============================================================================================
+    // private methods
+    //==============================================================================================
+
+    private Transformation getTransform(Context context) {
+        if (mTransform == null) {
+            float radius = context.getResources().getDimension(com.layer.atlas.R.dimen.atlas_message_item_cell_radius);
+            mTransform = new RoundedTransform(radius);
+        }
+
+        return mTransform;
     }
 
     static class Location implements AtlasCellFactory.ParsedContent {

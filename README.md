@@ -8,15 +8,6 @@ Atlas is an open source framework of customizable UI components for use with the
 
 Atlas requires Android API Level >= 14 (OS v4.0). The Layer SDK version requirements for each release are tightly coupled. See the release notes for details about specifics.
 
-###Feature Priorities
-We are actively adding features for the following priorities:
-
-1. Animated GIFs
-2. Video
-3. Automated UI tests
-
-Please see the list of branches for work in progress.  If you don't see a feature you are interested in there, please start a branch and submit a pull request.
-
 ##<a name="key_concepts"></a>Key Concepts
 With Atlas, Messages have types.  One type might be rich text, and another might be a map location or photo.  Anything that can be packaged into a set of MIME Types and data can be represented by Atlas.
 
@@ -112,7 +103,11 @@ conversationsList = ((AtlasConversationsRecyclerView) findViewById(R.id.conversa
 		public boolean onConversationLongClick(AtlasConversationsAdapter adapter, Conversation conversation) {
 		    return false;
 		}
-	});
+	})
+    .addCellFactories(new TextCellFactory(), 
+    new ThreePartImageCellFactory(layerClient, picasso),
+    new LocationCellFactory(picasso),
+    new SinglePartImageCellFactory(layerClient, picasso));
 ```
 
 ###<a name="messages"></a>Messages
@@ -196,11 +191,25 @@ typingIndicator = new AtlasTypingIndicator(this)
 	});
 ```
 
-###<a name="participants"></a>Participants
+###<a name="Message Types"></a>Message Types
+By default, Atlas supports the following types of messages.
 
-####AtlasParticipantPicker
+| Type            | Description |
+| ----------------|-------------|
+| Generic         | Default handler for unknown message types. Displays the mimetype and the content size |
+| Text            | Handler for `text/plain` content. |
+| Location        | Handler for `location/coordinate` content. Given `lat`/`lon` information, displays the location image (from Google maps), with a hyperlink that launches Maps application|
+| ThreePartImage  | Handler for 3 part JPEG image, with preview & dimensions. By default, displays the preview image. On tap, downloads and renders the full resolution image |
+| SinglePartImage | Handler for any mime type that starts with `image` tag |
 
-The <a href="layer-atlas/src/main/java/com/layer/atlas/AtlasParticipantPicker.java">AtlasParticipantPicker</a> allows the user to search and select one or more participants, or jump to existing Conversations.
+We expect to add support for other handlers in future. If you would like to build a handler, please check <a href="docs/Message-Handlers.md">doc on message handlers</a>.
+
+###<a name="Identity"></a>Identity
+
+An application server can directly upload user information to Layer server. This user information is called <a href="https://docs.layer.com/sdk/android/identities">Identity</a>. `AtlasAddressBar` and `AtlasAvater` are controls that are used to render the Identity information.
+
+####AtlasAddressBar
+`AtlasAddressBar` can be used to show a list of users. For eg, the list of users in a `Conversation` or to show a user list for creating a new `Conversation`.
 
 #####XML
 
@@ -238,6 +247,35 @@ addressBar = (AtlasAddressBar) findViewById(R.id.address_bar)
 	});
 ```
 
+####AtlasAvatar
+`AtlasAvatar`can be used to show information about one user, or as a cluster of multiple users. `AtlasAvatar` uses [Picasso](https://github.com/square/picasso) to render the avatar image. So, you need to `init` 
+
+#####XML
+
+```xml
+        <com.layer.atlas.AtlasAvatar
+            android:id="@+id/avatar"
+            android:layout_width="@dimen/atlas_avatar_item_single"
+            android:layout_height="@dimen/atlas_avatar_item_single"
+            android:layout_margin="@dimen/atlas_padding_normal"/>
+```
+
+#####Java
+
+```java
+	    // To create an avatar
+            mAvatarCluster = (AtlasAvatar) itemView.findViewById(R.id.avatar);
+	    
+	    // To initialize Picasso
+	    viewHolder.mAvatarCluster
+		.init(mPicasso)
+		.setStyle(conversationStyle.getAvatarStyle());
+		
+	    // To set identites meant for the avatar cluster
+	    HashSet<Identity> participants = new HashSet<>(conversation.getParticipants());
+	    viewHolder.mAvatarCluster.setParticipants(participants);
+```
+
 ##<a name="contributing"></a>Contributing
 Atlas is an Open Source project maintained by Layer. Feedback and contributions are always welcome and the maintainers try to process patches as quickly as possible. Feel free to open up a Pull Request or Issue on Github.
 
@@ -251,4 +289,6 @@ Atlas was developed in San Francisco by the Layer team. If you have any technica
 
 ###<a name="credits"></a>Credits
 
+* [Amar Srinivasan](https://github.com/sriamar)
 * [Steven Jones](https://github.com/sjones94549)
+* [Peter Elliott](https://github.com/smpete)

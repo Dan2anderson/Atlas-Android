@@ -23,7 +23,7 @@ public class GenericCellFactory extends AtlasCellFactory<GenericCellFactory.Cell
     public static String getPreview(Context context, Message message) {
         StringBuilder b = new StringBuilder();
         boolean isFirst = true;
-        b.append("[");
+        b.append("No cell factory registered - using GenericCellFactory\n[");
         for (MessagePart part : message.getMessageParts()) {
             if (!isFirst) b.append(", ");
             isFirst = false;
@@ -62,6 +62,16 @@ public class GenericCellFactory extends AtlasCellFactory<GenericCellFactory.Cell
             i++;
         }
         return new ParsedContent(builder.toString());
+    }
+
+    @Override
+    public boolean isType(Message message) {
+        return true;
+    }
+
+    @Override
+    public String getPreviewText(Context context, Message message) {
+        return GenericCellFactory.getPreview(context, message);
     }
 
     @Override

@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.layer.atlas.util.AvatarStyle;
 import com.layer.atlas.util.EditTextUtil;
@@ -47,11 +48,14 @@ import java.util.List;
 import java.util.Set;
 
 public class AtlasAddressBar extends LinearLayout {
+    public static final int MAX_PARTICIPANTS = 25;
+
     private LayerClient mLayerClient;
     private Picasso mPicasso;
 
     private OnConversationClickListener mOnConversationClickListener;
     private OnParticipantSelectionChangeListener mOnParticipantSelectionChangeListener;
+    private OnParticipantSelectionFailedListener mOnParticipantSelectionFailedListener;
 
     private FlowLayout mSelectedParticipantLayout;
     private EmptyDelEditText mFilter;
@@ -166,6 +170,11 @@ public class AtlasAddressBar extends LinearLayout {
         return this;
     }
 
+    public AtlasAddressBar setOnParticipantSelectionFailedListener(OnParticipantSelectionFailedListener onParticipantSelectionFailedListener) {
+        this.mOnParticipantSelectionFailedListener = onParticipantSelectionFailedListener;
+        return this;
+    }
+
     public AtlasAddressBar setSuggestionsVisibility(int visibility) {
         mParticipantList.setVisibility(visibility);
         return this;
@@ -205,13 +214,24 @@ public class AtlasAddressBar extends LinearLayout {
         mFilter.requestFocus();
     }
 
-    private boolean selectParticipant(Identity participant) {
-        return selectParticipant(participant, false);
+    private void selectParticipant(Identity participant) {
+        selectParticipant(participant, false);
     }
 
-    private boolean selectParticipant(Identity participant, boolean skipRefresh) {
-        if (mSelectedParticipants.contains(participant)) return true;
-        if (mSelectedParticipants.size() >= 24) return false;
+    private void selectParticipant(Identity participant, boolean skipRefresh) {
+        if (mSelectedParticipants.contains(participant)) return;
+        if (mSelectedParticipants.size() >= MAX_PARTICIPANTS) {
+            if (this.mOnParticipantSelectionFailedListener != null) {
+                this.mOnParticipantSelectionFailedListener.onMaxParticipantLimitExceeded();
+            }
+            else {
+                Toast.makeText(this.getContext(),
+                        String.format("Exceeded maximum permissible participants(%d)", MAX_PARTICIPANTS),
+                        Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
         mSelectedParticipants.add(participant);
         ParticipantChip chip = new ParticipantChip(getContext(), participant, mPicasso);
         mSelectedParticipantLayout.addView(chip, mSelectedParticipantLayout.getChildCount() - 1);
@@ -222,7 +242,6 @@ public class AtlasAddressBar extends LinearLayout {
         if (mOnParticipantSelectionChangeListener != null) {
             mOnParticipantSelectionChangeListener.onParticipantSelectionChanged(this, new ArrayList<>(mSelectedParticipants));
         }
-        return true;
     }
 
     private void unselectParticipant(ParticipantChip chip) {
@@ -742,5 +761,9 @@ public class AtlasAddressBar extends LinearLayout {
 
     public interface OnParticipantSelectionChangeListener {
         void onParticipantSelectionChanged(AtlasAddressBar conversationLauncher, List<Identity> participants);
+    }
+
+    public interface OnParticipantSelectionFailedListener {
+        void onMaxParticipantLimitExceeded();
     }
 }

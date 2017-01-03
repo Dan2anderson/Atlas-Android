@@ -25,19 +25,9 @@ public class TextCellFactory extends AtlasCellFactory<TextCellFactory.CellHolder
         super(256 * 1024);
     }
 
-    public static boolean isType(Message message) {
-        return message.getMessageParts().get(0).getMimeType().equals(MIME_TYPE);
-    }
-
-    public static String getMessagePreview(Context context, Message message) {
-        MessagePart part = message.getMessageParts().get(0);
-        // For large text content, the MessagePart may not be downloaded yet.
-        return part.isContentReady() ? new String(part.getData()) : "";
-    }
-
     @Override
     public boolean isBindable(Message message) {
-        return TextCellFactory.isType(message);
+        return isType(message);
     }
 
     @Override
@@ -73,6 +63,22 @@ public class TextCellFactory extends AtlasCellFactory<TextCellFactory.CellHolder
         cellHolder.mTextView.setText(parsed.getString());
         cellHolder.mTextView.setTag(parsed);
         cellHolder.mTextView.setOnLongClickListener(this);
+    }
+
+    public boolean isType(Message message) {
+        return message.getMessageParts().size() == 1 &&  message.getMessageParts().get(0).getMimeType().equals(MIME_TYPE);
+    }
+
+    @Override
+    public String getPreviewText(Context context, Message message) {
+        if (isType(message)) {
+            MessagePart part = message.getMessageParts().get(0);
+            // For large text content, the MessagePart may not be downloaded yet.
+            return part.isContentReady() ? new String(part.getData()) : "";
+        }
+        else {
+            throw new IllegalArgumentException("Message is not of the correct type - Text");
+        }
     }
 
     /**

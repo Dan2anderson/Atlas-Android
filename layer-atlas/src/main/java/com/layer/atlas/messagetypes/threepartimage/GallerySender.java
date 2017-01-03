@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 
 import com.layer.atlas.R;
@@ -18,16 +19,13 @@ import com.layer.sdk.messaging.PushNotificationPayload;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 
-import static android.support.v4.app.ActivityCompat.requestPermissions;
-import static android.support.v4.content.ContextCompat.checkSelfPermission;
-
 /**
  * GallerySender creates a ThreePartImage from the a selected image from the user's gallety.
  * Requires `Manifest.permission.READ_EXTERNAL_STORAGE` to read photos from external storage.
  */
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class GallerySender extends AttachmentSender {
-    private static final String PERMISSION = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) ? Manifest.permission.READ_EXTERNAL_STORAGE : null;
+    private static final String PERMISSION_READ = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) ? Manifest.permission.READ_EXTERNAL_STORAGE : null;
     public static final int ACTIVITY_REQUEST_CODE = 10;
     public static final int PERMISSION_REQUEST_CODE = 11;
 
@@ -43,7 +41,14 @@ public class GallerySender extends AttachmentSender {
     }
 
     private void startGalleryIntent(Activity activity) {
-        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("image/*");
+        } else {
+            intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        }
         activity.startActivityForResult(Intent.createChooser(intent, getContext().getString(R.string.atlas_gallery_sender_chooser)), ACTIVITY_REQUEST_CODE);
     }
 
@@ -63,12 +68,15 @@ public class GallerySender extends AttachmentSender {
     public boolean requestSend() {
         Activity activity = mActivity.get();
         if (activity == null) return false;
-        if (Log.isLoggable(Log.VERBOSE)) Log.v("Sending gallery image");
-        if (PERMISSION != null && checkSelfPermission(activity, PERMISSION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(activity, new String[]{PERMISSION}, PERMISSION_REQUEST_CODE);
-            return true;
+
+        if (!hasPermissions(activity, PERMISSION_READ)) {
+            if (Log.isLoggable(Log.VERBOSE)) Log.v("Requesting permissions");
+            requestPermissions(activity, PERMISSION_REQUEST_CODE, PERMISSION_READ);
+        }else {
+            if (Log.isLoggable(Log.VERBOSE)) Log.v("Sending gallery image");
+            startGalleryIntent(activity);
         }
-        startGalleryIntent(activity);
+
         return true;
     }
 
@@ -83,7 +91,8 @@ public class GallerySender extends AttachmentSender {
         try {
             Identity me = getLayerClient().getAuthenticatedUser();
             String myName = me == null ? "" : Util.getDisplayName(me);
-            Message message = ThreePartImageUtils.newThreePartImageMessage(activity, getLayerClient(), data.getData());
+            Uri uri = data.getData();
+            Message message = ThreePartImageUtils.newThreePartImageMessage(activity, getLayerClient(), uri);
 
             PushNotificationPayload payload = new PushNotificationPayload.Builder()
                     .text(getContext().getString(R.string.atlas_notification_image, myName))

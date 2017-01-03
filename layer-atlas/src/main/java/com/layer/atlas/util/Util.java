@@ -72,23 +72,6 @@ public class Util {
         manager.setPrimaryClip(clipData);
     }
 
-    // TODO: base this on registered types
-    public static String getLastMessageString(Context context, Message message) {
-        if (TextCellFactory.isType(message)) {
-            return TextCellFactory.getMessagePreview(context, message);
-        }
-        if (ThreePartImageCellFactory.isType(message)) {
-            return ThreePartImageCellFactory.getMessagePreview(context, message);
-        }
-        if (LocationCellFactory.isType(message)) {
-            return LocationCellFactory.getMessagePreview(context, message);
-        }
-        if (SinglePartImageCellFactory.isType(message)) {
-            return SinglePartImageCellFactory.getMessagePreview(context, message);
-        }
-        return GenericCellFactory.getPreview(context, message);
-    }
-
     public static String getConversationTitle(LayerClient client, Conversation conversation) {
         String metadataTitle = getConversationMetadataTitle(conversation);
         if (metadataTitle != null) return metadataTitle.trim();

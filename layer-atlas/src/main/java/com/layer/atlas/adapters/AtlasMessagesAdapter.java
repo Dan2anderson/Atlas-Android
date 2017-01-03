@@ -207,19 +207,19 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
      * @return This AtlasMessagesAdapter.
      */
     public AtlasMessagesAdapter addCellFactories(AtlasCellFactory... cellFactories) {
-        for (AtlasCellFactory CellFactory : cellFactories) {
-            CellFactory.setStyle(mMessageStyle);
-            mCellFactories.add(CellFactory);
+        for (AtlasCellFactory cellFactory : cellFactories) {
+            cellFactory.setStyle(mMessageStyle);
+            mCellFactories.add(cellFactory);
 
             mViewTypeCount++;
-            CellType me = new CellType(true, CellFactory);
+            CellType me = new CellType(true, cellFactory);
             mCellTypesByViewType.put(mViewTypeCount, me);
-            mMyViewTypesByCell.put(CellFactory, mViewTypeCount);
+            mMyViewTypesByCell.put(cellFactory, mViewTypeCount);
 
             mViewTypeCount++;
-            CellType notMe = new CellType(false, CellFactory);
+            CellType notMe = new CellType(false, cellFactory);
             mCellTypesByViewType.put(mViewTypeCount, notMe);
-            mTheirViewTypesByCell.put(CellFactory, mViewTypeCount);
+            mTheirViewTypesByCell.put(cellFactory, mViewTypeCount);
         }
         return this;
     }
